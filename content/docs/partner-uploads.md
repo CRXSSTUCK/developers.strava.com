@@ -4,8 +4,10 @@ slug = "partner-uploads"
 +++
 
 <br>
-Partners can upload an activity and attach a photo to that activity in two steps.
+Partners can upload an activity and attach a photo to that activity in two steps. Strava accepts the most common types of fitness data, but can also accept data specific to particular partners.
 Please email developers@strava.com to request access to the partner upload flow, or if you have questions while integrating against the partner upload API.
+
+### Upload
 
 #### Step 1: Upload an activity and photo metadata
 
@@ -127,3 +129,49 @@ Two important notes:
 The response should be a `200 OK` with no response body.
 
 You should now be able to see the photo attached to your activity at at www.strava.com/activities/{id}.
+
+
+### Data
+To see a complete list of the data we accept see the [upload documentation](https://developers.strava.com/docs/uploads). If you capture scalar data that can not be represented in one of existing fields, it can still be uploaded to Strava. The specifics are below, but in order for the value to be recognized please send sample files to your Strava technical contact. The steps depend on whether or not you upload a file (as defined above). 
+
+#### Include custom data without a file
+Add your new scalar type as an additional URL parameter.
+
+###### Example Request, modified above, to include `rpe` (Rated Perceived Exertion)
+	  $ curl -X POST https://www.strava.com/api/v3/activities \
+	        -H "Authorization: Bearer 83ebeabdec09f6670863766f792ead24d61fe3f9" \
+	        -d name="Most Epic Ride EVER!!!" \
+	        -d elapsed_time=18373 \
+	        -d distance=1557840
+	        -d start_date_local="2013-10-23T10:02:13Z" \
+	        -d type="Ride" \
+	        -d rpe=8
+
+#### Include custom data with a file
+Strava accepts custom data from FIT & TCX files. 
+
+##### FIT
+Strava accepts custom data via Fit 2.0 Developer Fields, see the [Fit SDK](https://www.thisisant.com/resources/fit) for more details.
+
+##### TCX
+Strava accepts custom data in the ``<Activity><Extensions>`` entity as defined in version 2 of [TCX](https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd).
+
+###### Example TCX with `dfb` (Delish Fish Burned)
+``` xml
+  <Activities>
+    <Activity Sport="Running">
+      <Id>2018-06-28T20:03:38.000Z</Id>
+      <Extensions>
+        <dfb>8</dfb>
+      </Extensions>
+      <Lap StartTime="2018-06-28T20:03:38.000Z">
+        <Calories>150</Calories>
+         ...
+      </Lap>
+      <Author xsi:type="Application_t">
+        <Name>Wholesome</Name>
+        ...
+      </Author>
+    </Activity>
+  </Activities>
+```
