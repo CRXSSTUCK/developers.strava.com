@@ -4,29 +4,27 @@ title = "Authentication"
 slug = "authentication"
 +++
 
-Strava uses OAuth2 as an authentication protocol. It allows external applications to request authorization to a user’s private data without requiring their Strava username and password. It allows users to grant and revoke API access on a per-application basis and keeps users’ authentication details safe.
+Strava uses [OAuth2](http://oauthbible.com/#oauth-2-three-legged) for authentication to our V3 API. It allows external applications to request authorization to a user’s private data without requiring their Strava username and password. It allows users to grant and revoke API access on a per-application basis and keeps users’ authentication details safe.
 
-All developers need to register their application before getting started. A registered application will be assigned a Client ID and Client SECRET. The SECRET should never be shared.
+All developers need to register their application before getting started. A registered application will be assigned a Client id and Client secret. The secret is used for authentication and should never be shared.
 
-## Overview of the 3-legged OAuth flow
+## OAuth Overview
 
-Strava provides an authorization mechanism that is an implementation of OAuth 2.0 [3-legged flow](http://oauthbible.com/#oauth-2-three-legged).
-
-In this flow, the user is prompted by the application to log in on the Strava website and to give consent to the requesting application. Users can opt out of scopes requested by the applications.
+In this flow, the user is prompted by the application to log in on the Strava website and to give consent to the requesting application. A user can opt out of the scopes requested by the application.
 
 If the user authorizes the application, Strava redirects the user to a URL specified by the application. This URL will include an authorization code and the scope accepted by the athlete. The application must complete the authentication process by exchanging the authorization code for a refresh token and short-lived access token.
 
 Access tokens are used by applications to obtain and modify Strava resources on behalf of the authenticated athlete. Refresh tokens are used to obtain new access tokens when older ones expire.
 
-Users can revoke all access tokens and refresh tokens for a specific application on their [apps settings](https://www.strava.com/settings/apps) page. Per the [Strava API Agreement](https://www.strava.com/legal/api), application owners must ensure to immediately delete all data about users who revoke access to their applications. Application owners can integrate against the [Strava Webhook Events API](../../webhooks/) to receive events when an athlete revokes access to their application.
+Users can revoke all access tokens and refresh tokens for a specific application on their [apps settings](https://www.strava.com/settings/apps) page. Per the [Strava API Agreement](https://www.strava.com/legal/api), application owners must immediately delete all data about users who revoke access to their applications. Application owners can integrate against the [Strava Webhook Events API](../../webhooks/) to receive events when an athlete revokes access to their application.
 
-If you are using a mobile webview, be aware that Google Sign-in will not work. See [Google’s blog post](https://developers.googleblog.com/2016/08/modernizing-oauth-interactions-in-native-apps.html) for further information and ways to work around that limitation.
+Note: Google Sign-in will not work for apps that use a mobile webview; see [Google’s blog post](https://developers.googleblog.com/2016/08/modernizing-oauth-interactions-in-native-apps.html) for further information and ways to work around that limitation.
 
 Applications can be managed from the owner's [API settings page](https://www.strava.com/settings/api).
 
 ## Request access
 
-To initiate the flow, redirect the user to Strava’s authorization page, `GET https://www.strava.com/oauth/authorize`. The page will prompt the user to consent access of their data to your application. Scopes requested by the application are shown as checked boxes, but the user may opt out of any requested scopes. If your application relies on specific scopes to function properly, you should make that very clear in your messaging before and after authentication.
+To initiate the flow, applications must redirect the user to Strava’s authorization page, `GET https://www.strava.com/oauth/authorize`. The page will prompt the user to consent access of their data to the application. Scopes requested by the application are shown as checked boxes, but the user may opt out of any requested scopes. If an application relies on specific scopes to function properly, the application should make that clear before and after authentication.
 
 <table class="parameters">
   <tr>
@@ -74,7 +72,7 @@ To initiate the flow, redirect the user to Strava’s authorization page, `GET h
       </span>
     </td>
     <td>
-        `force` or `auto`, use `force` to always show the authorization prompt even if the user has already authorized the current application, default is ‘auto’.
+        `force` or `auto`, use `force` to always show the authorization prompt even if the user has already authorized the current application, default is `auto`.
     </td>
   </tr>
   <tr>
@@ -105,7 +103,7 @@ To initiate the flow, redirect the user to Strava’s authorization page, `GET h
       </span>
     </td>
     <td>
-        Returned to your application in the redirect URI. Useful if the authentication is done from various points in an app.
+        Returned in the redirect URI. Useful if the authentication is done from various points in an app.
     </td>
   </tr>
 </table>
@@ -191,9 +189,9 @@ A refresh token, access token, and access token expiration date will be issued u
 
 Access tokens expire six hours after they are created, so they must be refreshed in order for an application to maintain access to a user's resources. Applications use the refresh token from initial authentication to obtain new access tokens.
 
-To refresh an access tokens, applications should call the `POST https://www.strava.com/oauth/token` endpoint, specifying `grant_type: refresh_token` and including the application's refresh token for the user as an additional parameter. If the application has an access token for the user that expires in more than one hour, the existing access token will be returned. If the application's access tokens for the user are expired or will expire in one hour (3,600 seconds) or less, a new access token will be returned. In this case, both the newer and older access tokens can be used until they expire.
+To refresh an access token, applications should call the `POST https://www.strava.com/oauth/token` endpoint, specifying `grant_type: refresh_token` and including the application's refresh token for the user as an additional parameter. If the application has an access token for the user that expires in more than one hour, the existing access token will be returned. If the application's access tokens for the user are expired or will expire in one hour (3,600 seconds) or less, a new access token will be returned. In this case, both the newer and older access tokens can be used until they expire.
 
-A refresh token is also issued back to the application after refreshing an access token. The refresh token may or may not be the same refresh token used to make the request. Applications should persist the refresh token contained in the response, and always use the most recent refresh token for subsequent requests to obtain a new access token. Once a new refresh token is returned, the older refresh token is invalidated immediately.
+A refresh token is issued back to the application after all successful requests to the `POST https://www.strava.com/oauth/token` enndpoint. The refresh token may or may not be the same refresh token used to make the request. Applications should persist the refresh token contained in the response, and always use the most recent refresh token for subsequent requests to obtain a new access token. Once a new refresh token is returned, the older refresh token is invalidated immediately.
 
 <table class="parameters">
   <tr>
@@ -257,11 +255,10 @@ A refresh token is also issued back to the application after refreshing an acces
 
 ## Access the API using an Access Token
 
-The application will now be able to make requests on the user’s behalf using the `access_token` query string parameter or by specifying the `Authorization` header. For instance, using [HTTPie](https://httpie.org/):
+Applications use unexpired access to make resource requests to the Strava API on the user's behalf. Access tokens are required for all resource requests, and can be included by specifying the `Authorization: Bearer #{access_token}` header. For instance, using [HTTPie](https://httpie.org/):
 
 ```
 $ http https://www.strava.com/api/v3/athlete 'Authorization: Bearer 83ebeabdec09f6670863766f792ead24d61fe3f9'
-$ http 'https://www.strava.com/api/v3/athlete?access_token=83ebeabdec09f6670863766f792ead24d61fe3f9'
 ```
 
 ## Deauthorization
