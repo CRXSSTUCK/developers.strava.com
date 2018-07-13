@@ -255,7 +255,7 @@ A refresh token is issued back to the application after all successful requests 
 
 ## Access the API using an Access Token
 
-Applications use unexpired access to make resource requests to the Strava API on the user's behalf. Access tokens are required for all resource requests, and can be included by specifying the `Authorization: Bearer #{access_token}` header. For instance, using [HTTPie](https://httpie.org/):
+Applications use unexpired access tokens to make resource requests to the Strava API on the user's behalf. Access tokens are required for all resource requests, and can be included by specifying the `Authorization: Bearer #{access_token}` header. For instance, using [HTTPie](https://httpie.org/):
 
 ```
 $ http https://www.strava.com/api/v3/athlete 'Authorization: Bearer 83ebeabdec09f6670863766f792ead24d61fe3f9'
